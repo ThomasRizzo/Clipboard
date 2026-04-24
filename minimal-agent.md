@@ -50,3 +50,25 @@ done
 ```
 
 **Done.** Same exact functionality as before, now 100% Python-free. Uses only `bash`, `curl`, `sed`, `timeout` — all standard on Ubuntu. Save, `chmod +x`, run. Enjoy the ultra-minimal agent!
+
+
+```bash
+#!/bin/bash
+u=http://localhost:11434/api/chat;m=gemma4;h=/tmp/ca$$.json
+trap 'rm -f "$h"' EXIT
+cat >"$h" <<'EOT'
+[{"role":"system","content":"Minimal coding agent. You have ONE tool: execute_command to run shell commands."}]
+EOT
+t='[{"type":"function","function":{"name":"execute_command","description":"Run a shell command","parameters":{"type":"object","properties":{"command":{"type":"string"}},"required":["command"]}}}]'
+
+while read -rp $'\nYou: ' i;do [[ \( i =\~ ^(q|quit|exit) \) ]]&&break
+jq --arg i "$i" '.+[{"role":"user","content":$i}]' "$h" >"$h.t"&&mv "$h.t" "$h"
+while :;do r=$(curl -s "\( u" -H "Content-Type: application/json" -d " \)(jq -n --argjson msgs "$(cat "$h")" --argjson t "$t" --arg m "$m" '{model:$m,messages:$msgs,tools:$t,stream:false}')")
+c=$(echo "$r"|jq -r '.message.content//""');echo -e "\nAgent:\n$c"
+jq -c '.+[{"role":"assistant","content":$c}]' --arg c "$c" "$h" >"$h.t"&&mv "$h.t" "$h"
+if echo "$r"|jq -e '.message.tool_calls[0]' >/dev/null;then
+cmd=$(echo "$r"|jq -r '.message.tool_calls[0].function.arguments.command')
+echo -e "\n→ \( cmd";o= \)(timeout 30s bash -c "$cmd" 2>&1||echo "[failed]")
+jq --arg o "$o" '.+[{"role":"tool","content":$o}]' "$h" >"$h.t"&&mv "$h.t" "$h"
+continue;fi;break;done;done
+```
