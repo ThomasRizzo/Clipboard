@@ -105,3 +105,74 @@ vu.main()
 Run with `python run.py` inside the shell.
 
 This flake is clean, fast to enter, and gives you everything you need for serious VUnit + GHDL work. Enjoy the verification goodness! 🚀
+
+```nix
+{
+  description = "GHDL + VUnit (fully Nix-packaged) development environment for VHDL";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
+  };
+
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+
+        # VUnit packaged natively in Nix (hash-verified, reproducible)
+        vunit = pkgs.python3Packages.buildPythonPackage rec {
+          pname = "vunit_hdl";
+          version = "4.7.1";
+
+          src = pkgs.fetchPypi {
+            inherit pname version;
+            hash = "sha256-3a6f0e19eaa1e79899676aa4cdce95ec8f649002362c4458c3e0412d0f7d0912";
+          };
+
+          # VUnit optionally uses colorama for nice colored output
+          propagatedBuildInputs = with pkgs.python3Packages; [
+            colorama
+          ];
+
+          # Tests require a simulator and are very heavy — skip them
+          doCheck = false;
+
+          pythonImportsCheck = [ "vunit" ];
+
+          meta = with pkgs.lib; {
+            description = "VUnit HDL testing framework";
+            homepage = "https://vunit.github.io/";
+            license = licenses.mpl20;
+          };
+        };
+
+        pythonWithVunit = pkgs.python3.withPackages (ps: [ vunit ]);
+
+      in
+      {
+        devShells.default = pkgs.mkShellNoCC {
+          name = "vhdl-vunit";
+
+          packages = with pkgs; [
+            ghdl-mcode          # fastest & most reliable backend for VUnit
+            gtkwave             # waveform viewer
+            pythonWithVunit     # Python + VUnit (fully Nix-locked)
+            gnumake
+          ];
+
+          shellHook = ''
+            echo "🚀 GHDL + VUnit development environment (fully Nixified)"
+            echo "   • GHDL (mcode): $(ghdl --version | head -1)"
+            echo "   • VUnit: $(python -c 'import vunit; print(vunit.__version__)' 2>/dev/null || echo 'loaded')"
+            echo "   • Everything is pinned, hashed, and reproducible"
+            echo ""
+            echo "Run your tests with:"
+            echo "   python run.py"
+            echo ""
+            echo "Tip: add 'use flake' to .envrc + direnv for auto-loading"
+          '';
+        };
+      });
+}
+```
