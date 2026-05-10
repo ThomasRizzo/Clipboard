@@ -1,27 +1,25 @@
 {
-  description = "Sandboxed OpenCode CLI (latest upstream + Rust + AWS Bedrock + crates.io only)";
+  description = "Sandboxed OpenCode — source-code repo fully editable + git commit allowed";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     fenix.url = "github:nix-community/fenix";
     fenix.inputs.nixpkgs.follows = "nixpkgs";
+    opencode.url = "github:anomalyco/opencode";
     agent-sandbox-nix.url = "github:archie-judd/agent-sandbox.nix";
-    opencode.url = "github:anomalyco/opencode";   # ← official flake, always latest
   };
 
-  outputs = { self, nixpkgs, fenix, agent-sandbox-nix, opencode }:
+  outputs = { self, nixpkgs, fenix, opencode, agent-sandbox-nix }:
     let
-      system = "x86_64-linux";  # or aarch64-linux
+      system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
 
       rustToolchain = fenix.packages.${system}.stable.toolchain;
-
-      # Use the latest opencode from upstream flake
       opencodePkg = opencode.packages.\( {system}.default or opencode.packages. \){system}.opencode;
 
       sandbox = agent-sandbox-nix.lib.mkSandbox {
         pkg = opencodePkg;
-        binName = "opencode";           # the binary name inside the package
+        binName = "opencode";
         outName = "opencode-sandboxed";
 
         allowedPackages = [
@@ -31,12 +29,9 @@
         ];
 
         restrictNetwork = true;
-
         allowedDomains = {
-          # AWS Bedrock (add your region(s))
           "bedrock-runtime.us-east-1.amazonaws.com" = "*";
           "bedrock.us-east-1.amazonaws.com" = "*";
-          # "crates.io" and static.crates.io for Rust
           "crates.io" = "*";
           "static.crates.io" = "*";
         };
@@ -46,6 +41,12 @@
           AWS_SECRET_ACCESS_KEY = "";
           AWS_SESSION_TOKEN = "";
           AWS_REGION = "us-east-1";
+
+          # Git identity for commits inside the sandbox
+          GIT_AUTHOR_NAME = "OpenCode Agent";
+          GIT_AUTHOR_EMAIL = "opencode@yourcompany.com";
+          GIT_COMMITTER_NAME = "OpenCode Agent";
+          GIT_COMMITTER_EMAIL = "opencode@yourcompany.com";
         };
       };
     in {
@@ -59,9 +60,10 @@
       devShells.${system}.default = pkgs.mkShell {
         packages = [ sandbox ];
         shellHook = ''
-          echo "✅ Sandboxed opencode (v1.14.41 — latest) ready!"
-          echo "Network limited to Bedrock + crates.io only."
-          echo "Git pull/push still handled outside the sandbox in CI."
+          echo "✅ Sandboxed opencode ready"
+          echo "• Run from inside source-code/ directory"
+          echo "• opencode can run git add / git commit freely"
+          echo "• nix-config repo is completely protected"
         '';
       };
     };
