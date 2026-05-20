@@ -1,5 +1,5 @@
 {
-  description = "Graphify (pinned + auto-setup) with extras: pdf, office, mcp, svg, bedrock, sql";
+  description = "Graphify (pinned + smart setup) with extras: pdf, office, mcp, svg, bedrock, sql";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -38,30 +38,33 @@
             echo "   • Extras         : ${extras}"
             echo ""
 
-            # Ensure local venv exists
+            # 1. Create venv if it doesn't exist
             if [ ! -d .venv ]; then
               echo "Creating virtual environment..."
               uv venv --seed
             fi
 
-            # Activate venv
+            # 2. Activate the venv
             source .venv/bin/activate
 
-            # Install / upgrade to exact pinned version + all extras
-            echo "Installing / upgrading graphifyy with extras..."
-            uv pip install --upgrade \
-              "graphifyy[${extras}]==${graphifyVersion}"
+            # 3. Check if correct version is already installed
+            if python -c "import graphifyy; import pkg_resources; print(pkg_resources.get_distribution('graphifyy').version)" 2>/dev/null | grep -q "^${graphifyVersion}$"; then
+              echo "✅ Correct version of graphifyy (${graphifyVersion}) is already installed."
+            else
+              echo "Installing / upgrading graphifyy to exact pinned version..."
+              uv pip install --upgrade \
+                "graphifyy[${extras}]==${graphifyVersion}"
+              echo "✅ Graphifyy successfully installed/updated!"
+            fi
 
             echo ""
-            echo "✅ Graphify is fully set up and ready!"
-            echo "Commands:"
+            echo "🎉 Graphify is ready!"
+            echo "Available commands:"
             echo "   graphify --help"
-            echo "   graphify install          # Register as AI coding skill (recommended)"
+            echo "   graphify install          # Register as AI coding skill (first time)"
             echo ""
-            echo "💡 For AWS GovCloud Bedrock:"
-            echo "   Make sure AWS credentials are configured and AWS_REGION is set to us-gov-west-1 or us-gov-east-1"
-            echo ""
-            echo "You are now in a fully activated Python environment with Graphify."
+            echo "💡 AWS GovCloud / Bedrock tip:"
+            echo "   Ensure your AWS credentials and AWS_REGION (us-gov-west-1 or us-gov-east-1) are set."
           '';
         };
       });
