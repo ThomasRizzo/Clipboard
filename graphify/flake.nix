@@ -1,5 +1,5 @@
 {
-  description = "Graphify with extras: pdf, office, mcp, svg, bedrock, sql";
+  description = "Graphify with extras: pdf, office, mcp, svg, bedrock, sql (pinned version)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -10,6 +10,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        graphifyVersion = "0.8.13";
       in {
         devShells.default = pkgs.mkShellNoCC {
           name = "graphify-with-extras";
@@ -17,7 +18,7 @@
           buildInputs = with pkgs; [
             python312
             uv
-            # System libraries needed by Graphify extras
+            # System libraries needed by the extras
             pkg-config
             cairo
             pango
@@ -26,21 +27,30 @@
             freetype
             libxml2
             libxslt
-            # Additional for PDF/Office/SVG
             poppler
+            # For Office file support (optional)
             libreoffice
           ];
 
           shellHook = ''
-            echo "🚀 Graphify Nix environment ready (pdf, office, mcp, svg, bedrock, sql)"
+            echo "🚀 Graphify Nix devShell ready"
+            echo "   Version locked → graphifyy ${graphifyVersion}"
+            echo "   Extras: pdf, office, mcp, svg, bedrock, sql"
             echo ""
-            echo "Install commands:"
-            echo "  uv tool install \"graphifyy[pdf,office,mcp,svg,bedrock,sql]\""
-            echo "  # or"
-            echo "  uv venv && source .venv/bin/activate && uv pip install \"graphifyy[pdf,office,mcp,svg,bedrock,sql]\""
-            echo ""
-            echo "Then: graphify --help"
-            echo "AWS Bedrock/GovCloud: Configure your AWS credentials and set AWS_REGION to a GovCloud region."
+
+            # Create venv if it doesn't exist
+            if [ ! -d .venv ]; then
+              uv venv --seed
+            fi
+
+            source .venv/bin/activate
+
+            # Install/upgrade to exact pinned version with all requested extras
+            uv pip install --upgrade "graphifyy[${extras}]=${graphifyVersion}"
+
+            echo "✅ graphifyy ${graphifyVersion} with extras installed"
+            echo "Run: graphify --help"
+            echo "For GovCloud Bedrock: ensure AWS credentials + AWS_REGION=us-gov-west-1 (or east-1)"
           '';
         };
       });
