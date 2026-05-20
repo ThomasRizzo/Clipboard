@@ -1,4 +1,4 @@
-# Nick's Dev Shell
+# Nix Dev Shell
 
 A clean, reproducible Nix development shell containing:
 
