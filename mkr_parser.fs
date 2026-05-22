@@ -1,3 +1,40 @@
+(*
+    mkr_parser.fs
+    =============
+
+    F# parser using FParsec for VNA / Network Analyzer marker data.
+
+    Sample Input Data:
+    ------------------
+    #Port 1 Frq 1.3GHz
+    !MKR 099_01 : +12345.66 -23.45
+    !MKR 099_02 : +12355.66 -21.45
+    !MKR 099_03 : +12365.66 -20.45
+    #Port 1 Frq 1.5GHz
+    !MKR 099_01 : +12345.66 -23.45
+    !MKR 099_02 : +12355.66 -21.45
+    !MKR 099_03 : +12365.66 -20.45
+
+    Record Definition:
+    ------------------
+    type MarkerData =
+        { port: float
+          inputfreq_GHz: float
+          channel: float
+          marker: float
+          freq_Hz: float
+          mag_DBm: float }
+
+    Notes:
+    ------
+    - Parses repeating blocks starting with #Port X Frq Y.ZGHz
+    - Each block can have 0 or more !MKR lines
+    - Extracts channel and marker from format like "099_01"
+    - Returns seq<MarkerData> for easy processing
+    - Robust handling of whitespace and newlines
+    - Uses FParsec combinators
+*)
+
 open FParsec
 
 type MarkerData =
