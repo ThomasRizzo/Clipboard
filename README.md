@@ -1,20 +1,24 @@
-# Nix Dev Shell
+# Clipboard
 
-A clean, reproducible Nix development shell containing:
+A personal collection of notes, Nix flakes, scripts, and documentation for AI tooling, embedded development, reproducible environments, and various experiments.
 
-- **git** (latest from nixpkgs unstable)
-- **Python 3.12** (full distribution)
-- **OpenCode** — latest version pulled directly from [GitHub](https://github.com/anomalyco/opencode)
+## What's Inside
 
-## How to use
+- **Nix development shells** (`flake.nix`) – Quick, reproducible environments with tools like OpenCode, Python, Git, etc.
+- Project-specific notes:
+  - `DE0-MIGRATION.md` – FPGA board migration guide (DE0 Cyclone III → DE0-Nano Cyclone IV)
+  - `codex-cli-windows-sandbox.md`, `opencode-fsharp-subagent.md`, `minimal-agent.md`, etc. – AI/agentic coding workflows
+  - `Pi-nix.md`, `vunit-nix.md`, `oc-rust-sandbox.nix` – Nix + hardware/embedded topics
+  - `graphify/` – Related Nix flake
+  - Brainstorming & other docs (`Brainstorm.md`, `Timeplot.md`, `clap-selfupdate.md`, etc.)
 
-### One-liner (no cloning needed)
+## Quick Start
+
 ```bash
+# Enter the dev shell (no clone needed)
 nix develop github:ThomasRizzo/Clipboard
-```
 
-### Or clone the repo
-```bash
+# Or clone
 git clone https://github.com/ThomasRizzo/Clipboard.git
 cd Clipboard
 nix develop
@@ -22,13 +26,12 @@ nix develop
 
 ## Updating
 
-To pull the newest OpenCode (or any other updates):
 ```bash
-nix flake update opencode
+nix flake update
 ```
 
-Then re-enter the shell with `nix develop`.
+Made for quick access to modern dev tools and personal knowledge base. Contributions welcome for improvements!
 
 ---
 
-Made with ❤️ for quick access to modern dev tools.
+See individual `.md` files for detailed notes on each topic.
