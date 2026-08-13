@@ -11,6 +11,8 @@ A personal collection of notes, Nix flakes, scripts, and documentation for AI to
   - `Pi-nix.md`, `vunit-nix.md`, `oc-rust-sandbox.nix` – Nix + hardware/embedded topics
   - `graphify/` – Related Nix flake
   - Brainstorming & other docs (`Brainstorm.md`, `Timeplot.md`, `clap-selfupdate.md`, etc.)
+  - `egui-larger-app-best-practices.md` – Structure and architecture notes for larger egui/eframe apps, with links to solid examples
+  - `egui-pdf-rig-tesseract-setup.md` – egui + PDF + RIG + OCR stack sketch
 
 ## Quick Start
 
