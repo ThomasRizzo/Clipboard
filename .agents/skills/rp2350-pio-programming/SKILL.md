@@ -24,7 +24,7 @@ Dense quirk/edge-case reference for writing `.pio` against RP2350. Prefer this o
 ## 1. RP2350 vs RP2040 (§11.1.1)
 
 ### New registers / controls
-|| Feature | Gotcha |
+| Feature | Gotcha |
 |---|---|
 | `DBG_CFGINFO.VERSION` = 1 (was reserved-0) | Runtime PIO feature detect |
 | `GPIOBASE` | Still only **32 GPIOs visible per PIO**; base selects which window |
@@ -52,7 +52,7 @@ Dense quirk/edge-case reference for writing `.pio` against RP2350. Prefer this o
 
 16-bit instructions. Bits 12:8 = **Delay/side-set** (budget shared: up to 5 bits total).
 
-|| Op | 15:13 | Notes |
+| Op | 15:13 | Notes |
 |---|---|---|
 | JMP | `000` | Cond[7:5] Addr[4:0] |
 | WAIT | `001` | Pol[7] Src[6:5] Index[4:0] |
@@ -74,7 +74,7 @@ Dense quirk/edge-case reference for writing `.pio` against RP2350. Prefer this o
 
 **Encoding:** Cond[2:0] + absolute 5-bit address in IMEM.
 
-|| Cond | Meaning | Gotcha |
+| Cond | Meaning | Gotcha |
 |---|---|---|
 | `000` | Always | |
 | `001` | `!X` | X == 0 |
@@ -95,7 +95,7 @@ Dense quirk/edge-case reference for writing `.pio` against RP2350. Prefer this o
 
 Stall until Polarity matches Source[Index].
 
-|| Source | Index meaning | Gotcha |
+| Source | Index meaning | Gotcha |
 |---|---|---|
 | `00` GPIO | Absolute GPIO # | **Ignores** IN map / `GPIOBASE` window caveats — absolute in SM-visible space |
 | `01` PIN | IN_BASE + Index (mod 32) | Uses IN mapping |
@@ -113,7 +113,7 @@ Stall until Polarity matches Source[Index].
 
 Shift `Bit count` bits from Source into ISR; ISR shift count += count (sat 32).
 
-|| Source | Notes |
+| Source | Notes |
 |---|---|
 | PINS | IN map; always takes **LSBs of mapped bus**, bit order **independent of shift direction** |
 | X / Y / NULL / ISR / OSR | NULL useful to right-align after LSB-first serial IN |
@@ -129,7 +129,7 @@ Shift `Bit count` bits from Source into ISR; ISR shift count += count (sat 32).
 
 Shift `Bit count` out of OSR → Destination; OSR count += count (sat 32). OSR fills with 0s as bits leave.
 
-|| Dest | Gotcha |
+| Dest | Gotcha |
 |---|---|
 | PINS / PINDIRS | OUT map |
 | X / Y / NULL | NULL discards (still advances count — useful flush) |
@@ -148,7 +148,7 @@ Shift `Bit count` out of OSR → Destination; OSR count += count (sat 32). OSR f
 
 ISR → RX FIFO (32-bit); clear ISR to 0; clear ISR shift count.
 
-|| Flag | Default (asm) | Behaviour |
+| Flag | Default (asm) | Behaviour |
 |---|---|---|
 | IfFull | off | If 1: no-op unless ISR count ≥ `PUSH_THRESH` |
 | Block | **on** | If 1: stall on RX full. If 0: **don’t stall**; ISR still cleared; `FDEBUG_RXSTALL` set; FIFO unchanged (data lost) |
@@ -162,7 +162,7 @@ ISR → RX FIFO (32-bit); clear ISR to 0; clear ISR shift count.
 
 TX FIFO → OSR; clears OSR shift count on success.
 
-|| Flag | Default | Behaviour |
+| Flag | Default | Behaviour |
 |---|---|---|
 | IfEmpty | off | If 1: no-op unless OSR count ≥ `PULL_THRESH` |
 | Block | **on** | If 1: stall on TX empty. If 0: **copy X → OSR** |
@@ -176,7 +176,7 @@ TX FIFO → OSR; clears OSR shift count on success.
 
 Copy Source → Destination with optional `~` / `::` (bit-reverse).
 
-|| Dest | Side effect |
+| Dest | Side effect |
 |---|---|
 | PINS / PINDIRS | OUT map. **PINDIRS dest = RP2350 only** |
 | X / Y | |
@@ -185,7 +185,7 @@ Copy Source → Destination with optional `~` / `::` (bit-reverse).
 | ISR | **ISR shift count ← 0** (empty) |
 | OSR | **OSR shift count ← 0** (full / “nothing shifted out”) |
 
-|| Source | Notes |
+| Source | Notes |
 |---|---|
 | PINS | IN map, masked by `IN_COUNT` (RP2350) |
 | STATUS | All-1s or all-0s per `STATUS_SEL` / `STATUS_N` |
@@ -200,7 +200,7 @@ Copy Source → Destination with optional `~` / `::` (bit-reverse).
 
 ### 3.8 MOV RX FIFO put/get (RP2350) (§11.4.8–11.4.9)
 
-|| Mode | Instruction | System access |
+| Mode | Instruction | System access |
 |---|---|---|
 | `FJOIN_RX_PUT` only | `MOV rxfifo[y\|imm], isr` | System **read** via `RXFx_PUTGETy` (status regs) |
 | `FJOIN_RX_GET` only | `MOV osr, rxfifo[y\|imm]` | System **write** (control regs) |
@@ -216,7 +216,7 @@ Copy Source → Destination with optional `~` / `::` (bit-reverse).
 
 Set or clear IRQ flag; optional wait-for-clear.
 
-|| IdxMode | Meaning |
+| IdxMode | Meaning |
 |---|---|
 | `00` | This PIO, Index[2:0] |
 | `01` PREV | Next-lower PIO (wrap) |
@@ -261,7 +261,7 @@ Concurrent GPIO level/dir write packed in Delay/side-set field.
 ## 5. Autopull / Autopush (§11.5.4)
 
 ### Counters (§11.2.4.2, §11.5.4)
-|| Event | OSR count | ISR count |
+| Event | OSR count | ISR count |
 |---|---|---|
 | Reset / `SM_RESTART` | **32** (empty/exhausted) | **0** (empty) |
 | Successful PULL / autopull | 0 | — |
@@ -309,7 +309,7 @@ After each instruction, PC update priority:
 
 ## 7. FIFO join modes (§11.5.3, §11.7)
 
-|| Mode | TX | RX | Notes |
+| Mode | TX | RX | Notes |
 |---|---|---|---|
 | Default | 4 | 4 | |
 | `FJOIN_TX` | 8 | 0 | RX always FULL+EMPTY; PUSH stalls |
@@ -328,7 +328,7 @@ After each instruction, PC update priority:
 
 ## 8. Timing / cycles
 
-|| Case | Cycles |
+| Case | Cycles |
 |---|---|
 | Normal instruction | 1 |
 | + delay field | +0..31 (after completion) |
@@ -363,7 +363,7 @@ After each instruction, PC update priority:
 
 ## 10. GPIO mapping & conflicts (§11.2.6, §11.5.6)
 
-|| Group | Base / Count | Used by |
+| Group | Base / Count | Used by |
 |---|---|---|
 | OUT | OUT_BASE, OUT_COUNT | OUT, MOV PINS/PINDIRS |
 | SET | SET_BASE, SET_COUNT (≤5) | SET |
@@ -455,7 +455,7 @@ Clears: ISR contents; ISR+OSR **shift counters**; delay counter; IRQ-wait state;
 
 Sources mixed freely: IMEM | `SMx_INSTR` | `MOV EXEC` | `OUT EXEC`.
 
-|| Mechanism | Delay | Clkdiv | PC |
+| Mechanism | Delay | Clkdiv | PC |
 |---|---|---|---|
 | IMEM | obeyed | obeyed | advances / wrap / jmp |
 | INSTR write | **ignored** | **ignored** (runs now) | unchanged unless instr moves PC |
@@ -467,7 +467,7 @@ I2C embeds control ops in TX stream via OUT EXEC — instructions in FIFO words.
 
 ## 15. Shift-direction field of view
 
-|| | OUT_SHIFTDIR=1 (right) | =0 (left) |
+| | OUT_SHIFTDIR=1 (right) | =0 (left) |
 |---|---|---|
 | Bits taken from OSR | LSBs | MSBs |
 | Serial UART/SPI LSB-first | typical | — |
@@ -500,7 +500,7 @@ OSR fills with zeros as bits shift out; ISR shifted to make room then new bits c
 
 ## 17. Section index (datasheet)
 
-|| Topic | § |
+| Topic | § |
 |---|---|
 | Overview / RP2350 changes | 11.1, 11.1.1 |
 | Control flow, stall, pins, IRQ | 11.2.2–11.2.8 |
