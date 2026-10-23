@@ -14,6 +14,7 @@ A personal collection of notes, Nix flakes, scripts, and documentation for AI to
   - `egui-larger-app-best-practices.md` – Structure and architecture notes for larger egui/eframe apps, with links to solid examples
   - `egui-pdf-rig-tesseract-setup.md` – egui + PDF + RIG + OCR stack sketch
   - `grok-build-intranet-govcloud.md` – **start here on the corp intranet**: build Grok Build from GitHub, GovCloud Grok 4.6 only (Bedrock Mantle + AWS token helper, no `x.ai`)
+  - `rhai-grok-build-workflows.md` – RHAI scripting language overview + Grok Build workflow samples and big-bucket repos
 
 ## Quick Start
 
