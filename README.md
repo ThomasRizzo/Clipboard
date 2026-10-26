@@ -12,6 +12,7 @@ A personal collection of notes, Nix flakes, scripts, and documentation for AI to
   - `graphify/` – Related Nix flake
   - Brainstorming & other docs (`Brainstorm.md`, `Timeplot.md`, `clap-selfupdate.md`, etc.)
   - `egui-larger-app-best-practices.md` – Structure and architecture notes for larger egui/eframe apps, with links to solid examples
+  - `schemas/opencode.v2.schema.json` – OpenCode v2 `opencode.json` JSON Schema (from https://opencode.ai/config.json, anomalyco/opencode@0f3a0c2, fetched 2026-10-26; accepts v2 fields plus deprecated v1); `schemas/opencode.schema.json` is the earlier v1 schema (fetched 2026-09-30)
   - `egui-pdf-rig-tesseract-setup.md` – egui + PDF + RIG + OCR stack sketch
   - `grok-build-intranet-govcloud.md` – **start here on the corp intranet**: build Grok Build from GitHub, GovCloud Grok 4.6 only (Bedrock Mantle + AWS token helper, no `x.ai`)
   - `rhai-grok-build-workflows.md` – RHAI scripting language overview + Grok Build workflow samples and big-bucket repos
