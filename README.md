@@ -17,6 +17,7 @@ A personal collection of notes, Nix flakes, scripts, and documentation for AI to
   - `grok-build-intranet-govcloud.md` – **start here on the corp intranet**: build Grok Build from GitHub, GovCloud Grok 4.6 only (Bedrock Mantle + AWS token helper, no `x.ai`)
   - `rhai-grok-build-workflows.md` – RHAI scripting language overview + Grok Build workflow samples and big-bucket repos
   - `nvidia-openshell-sandbox.md` – NVIDIA OpenShell agent sandbox: platforms, install, isolation and policy model (v0.1.7)
+  - `pna-x-afr-scpi-a-to-b.md` – Keysight PNA-X A-to-B Automatic Fixture Removal (AFR) SCPI migration guide for coding agents
 
 ## Quick Start
 
