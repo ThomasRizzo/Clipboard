@@ -192,6 +192,82 @@ Calibrate at the fixture connectors *before* AFR (AFR UI help). Fixture characte
 - `CALC:FSIM:APPLy`, `CALC:FSIM:STATe` — same names; `APPLy` is explicitly “same as legacy.”
 - Legacy `CALC:FSIM:SEND:DEEM:PORT` — still works **until** new FSIM SCPI or the new fixture GUI is used.
 
+### 4.5 Reading back the full de-embedding configuration (B model)
+
+Use this to capture the fixture setup that is currently on the instrument, for logging, auditing, or rebuilding it later. Every query below is listed on Keysight's [FSimulatorActive](https://helpfiles.keysight.com/csg/NA520xA/Programming/GP-IB_Command_Finder/Calculate/FSimulatorActive.htm) page (the **active**, applied fixture, all read-only) or the [FSimulatorDraft](https://helpfiles.keysight.com/csg/NA520xA/Programming/GP-IB_Command_Finder/Calculate/FSimulatorDraft.htm) page (the **draft**, the unapplied scratch copy).
+
+**Active vs draft.** Read the **active** tree (`CALC<cnum>:FSIM:CIRCuit<circN>:...?`) to see what is actually being applied to measurements. Most draft queries mirror it with `:DRAFt:` inserted (`CALC<cnum>:FSIM:DRAFt:CIRCuit<circN>:...?`). The draft only matches the active fixture after `CALC:FSIM:APPLy`, or after `CALC:FSIM:DRAFt:DISCard`, which copies active into draft. To read the draft without accidentally losing unapplied edits, do not send `DISCard`.
+
+**Step 0: which command family is in use.**
+
+| Query | Returns | Notes |
+|---|---|---|
+| `CALC<cnum>:FSIM:LEGacy?` | Boolean | If true, the fixture was built with the legacy `SEND:DEEM:PORT<n>` commands. Read it with the legacy queries on [FSimulatorSend](https://helpfiles.keysight.com/csg/NA520xA/Programming/GP-IB_Command_Finder/Calculate/FSimulatorSend.htm) (for example `CALC<cnum>:FSIM:SEND:DEEM:PORT<n>:SNP:REVerse?`) instead of this section. |
+| `CALC<cnum>:FSIM:STATe?` | Boolean | Master on/off for de-embed, port matching, and impedance conversion on the channel. |
+| `CALC<cnum>:FSIM:SECTion:CIRCuit:ENABle?` | Boolean | All circuit blocks on or off. Note that the help's query syntax line spells it `SECTionCIRCuit` with no colon, which looks like a typo; use `SECT:CIRC:ENAB?` as in its example. |
+| `CALC<cnum>:FSIM:SECTion:EXTension:ENABle?` | Boolean | Port-extension section on or off. |
+| `CALC<cnum>:FSIM:SECTion:ZCONversion:ENABle?` | Boolean | Impedance-conversion section on or off. |
+| `CALC<cnum>:FSIM:POWer:COMPensate:MODE?` | `ALL` \| `DEEMbed` | Source-power compensation through all fixture blocks or de-embed blocks only. |
+
+**Step 1: list the circuit blocks.**
+
+| Query | Returns |
+|---|---|
+| `CALC<cnum>:FSIM:CIRCuit:CATalog?` (draft: `CALC<cnum>:FSIM:DRAFt:CIRCuit:CATalog?`) | Comma-separated string of circuit (block) numbers. |
+| `CALC<cnum>:FSIM:DRAFt:CIRCuit<circN>:SECTion?` | Draft only. The circuit section the block sits in, meaning the section whose nodes its left-side connectors attach to. Use it to recover block order. |
+
+**Step 2: for each `<circN>` in the catalog, read its settings.**
+
+| Query (active form; insert `:DRAFt` for draft) | Returns | Valid for |
+|---|---|---|
+| `CALC<cnum>:FSIM:CIRCuit<circN>:STATe?` | Boolean | All blocks |
+| `CALC<cnum>:FSIM:CIRCuit<circN>:EMBED:TYPE?` | `EMBed` \| `DEEMbed` | All blocks |
+| `CALC<cnum>:FSIM:CIRCuit<circN>:VNA:PORTs?` | VNA port list | All blocks |
+| `CALC<cnum>:FSIM:CIRCuit<circN>:DEVice:PORTs[:ARRay]?` | Device port list (in, out) | All blocks. The active page's query-syntax line shows the `:DRAFt:` form; its example shows the active form `CALC:FSIM:CIRC:DEV:PORT?`. |
+| `CALC<cnum>:FSIM:CIRCuit<circN>:DEVice:PORTs:REVerse?` | Boolean, whether the S2P ports are reversed | File blocks |
+| `CALC<cnum>:FSIM:CIRCuit<circN>:FILE?` | File path string | `FILe`, `D4PFile`, `FGLoop` |
+| `CALC<cnum>:FSIM:CIRCuit<circN>:FILE:EXTRapolate?` | Boolean | File blocks |
+| `CALC<cnum>:FSIM:CIRCuit<circN>:FILE:LABel?` | String (default `"User"`) | File blocks |
+| `CALC<cnum>:FSIM:CIRCuit<circN>:FILE:MODify?` | `NONE` \| `NREFlect` \| `NXTalk` | File blocks |
+| `CALC<cnum>:FSIM:CIRCuit<circN>:PARameter:{R\|L\|C\|G\|R2\|L2\|C2\|G2}?` | Numeric (ohms, henries, farads, siemens) | Lumped-element blocks, for example `SLPC`, `PCSL`, `PLSC`, `SCPL`, `PLPC`, `SCPC`, `PCSC`, `SLPL`, `PLSL`, and the `*GLoop` types |
+| `CALC<cnum>:FSIM:CIRCuit<circN>:PARameter:{Z0\|DELay\|LOSS:VALue}?` | Numeric | `ILIN` (ideal line) |
+| `CALC<cnum>:FSIM:CIRCuit<circN>:PARameter:{RIN\|ROUT}?` | Numeric | Blocks that use them (see the help page per parameter) |
+
+Keysight documents that a query for a parameter the block does not use has no effect, so a dumper can query everything and keep only meaningful values. Check `SYST:ERR?` after each query on the target firmware, because whether an unused parameter returns `0` or raises an error is **unconfirmed**.
+
+**Gap: block type.** Neither page lists a query that returns a block's type (the `<block type>` given to `CALC:FSIM:DRAFt:CIRCuit<n>:ADD`, such as `FILe` or `SLPC`). To rebuild a fixture exactly, record block types when your code creates them, or infer them from which parameters are meaningful (a non-empty `FILE?` means a file block). Confirm on the instrument whether firmware exposes a type query; Keysight's [SCPI command tree](https://helpfiles.keysight.com/csg/NA520xA/Programming/GP-IB_Command_Finder/SCPI_Command_Tree.htm) is the place to look.
+
+**Step 3: port extensions and impedance conversion (per VNA port `<pnum>`).**
+
+| Query (active form) | Notes |
+|---|---|
+| `CALC<cnum>:FSIM:EXTension:PORT<pnum>[:STATe]?` | Port extension on or off |
+| `CALC<cnum>:FSIM:EXTension:PORT<pnum>:DELay?` | Seconds |
+| `CALC<cnum>:FSIM:EXTension:PORT<pnum>:DISTance:VALue?`, `CALC<cnum>:FSIM:EXTension:PORT:DISTance:UNIT?` | Distance and its unit |
+| `CALC<cnum>:FSIM:EXTension:PORT<pnum>:LOSS<n>[:STATe]?`, `:LOSS<n>:VALue?`, `:LOSS<n>:FREQuency?`, `:DCLoss:VALue?` | Loss model |
+| `CALC<cnum>:FSIM:EXTension:PORT<pnum>:MEDium?`, `:VELocity:FACtor?`, `:VELocity:COUPle?`, `:WAVEguide:FCUToff?`, `:WAVEguide:COUPle?` | Medium and velocity |
+| `CALC<cnum>:FSIM:ZCONversion:SENDed:PORt:STATe?`, `:SENDed:PORt<pnum>:COMPlex?`, `:SENDed:PORT<pnum>:SCALer?` | Single-ended impedance conversion |
+| `CALC<cnum>:FSIM:ZCONversion:DIFFerential:STATe?`, `:DIFFerential:{BPORt\|LPORt}<pnum>:{COMPlex\|SCALer}?` | Differential-mode impedance |
+| `CALC<cnum>:FSIM:ZCONversion:COMMonmode:{BPORt\|LPORt}<pnum>:{COMPlex\|SCALer}?` | Common-mode impedance |
+| `CALC<cnum>:FSIM:COMMonmode:DIFFerential:STATe?` | Listed on FSimulatorActive |
+
+The draft tree has the same extension and ZCONversion queries under `CALC<cnum>:FSIM:DRAFt:...` (for example `CALC<cnum>:FSIM:DRAFt:EXTension:PORT<pnum>:DELay?`). The spellings `PORt`, `SCALer` and `COMPlex` are copied from the help; SCPI is case-insensitive, so they only matter for the short form.
+
+**Step 4 (optional): snapshot the combined fixture as data.**
+- `CALC<cnum>:FSIM:SAVE "<path>"` saves an SNP file of the entire **active** fixture.
+- `CALC<cnum>:FSIM:DRAFt:SAVE "<path>"` does the same for the draft.
+
+Both append `.sNp` based on port count. This captures the combined fixture response, not the block structure, so keep it alongside the Step 1–3 dump rather than instead of it.
+
+**Agent recipe (dump to JSON).**
+1. Send `*IDN?`, then `CALC<cnum>:FSIM:LEGacy?`, then the Step 0 queries.
+2. Parse `CIRCuit:CATalog?`, which is a quoted comma list that may be empty, and loop over the circuits running the Step 2 queries.
+3. Loop over the VNA ports (`1..N`, using the count from the instrument) running the Step 3 queries.
+4. Send `SYST:ERR?` after each query. Store any error alongside the key instead of aborting.
+5. Write `{idn, firmware, channel, legacy, master_state, sections, circuits:[...], ports:[...]}`. Optionally also save the SNP from Step 4 and record its path.
+
+To restore, replay the dump with the draft **set** commands (`ADD`, `VNA:PORTs`, `DEVice:PORTs`, `EMBED:TYPE`, `FILE`, `PARameter:*`, `STATe`), then `CALC:FSIM:APPLy` and `CALC:FSIM:STATe`. Remember the block-type gap above.
+
 ## 5. Behavioral differences (not just names)
 
 **Calibration plane.** AFR UI help: perform a calibration at the connectors of the test fixture first; AFR then removes the fixture so displayed results are the DUT. That procedure is the same idea on A (wizard) and B (wizard or SCPI). On B, `AFR:CORRection:METHod CHAN` applies to channels (empty list = active channel) and `CSET` applies to cal sets; `AFR:CORRection:PORT` / `:PORT:APPLy` select which VNA ports receive the correction. How that interacts with an existing error-term cal set compared with FSIM de-embed is **unconfirmed** — measure a known thru / verify residual after both methods.
